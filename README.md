@@ -1,67 +1,76 @@
-# Password Manager
+# Passkit
 
-A local desktop password manager built with Python, Tkinter, and SQLite.
-Made as a college project, later cleaned up into something closer to a
-normal Python codebase (package layout, tests, no giant single file).
+A local password manager written in Python, using Tkinter for the UI and SQLite for storage. Started out as a college project, then I went back and cleaned it up into an actual package instead of one long script.
 
-## Features
+Everything runs on your machine. No server, no account, no syncing.
 
-- Master password login, checked with a constant-time comparison
-- Entries encrypted at rest with Fernet (AES-128-CBC + HMAC), keyed off
-  your master password through PBKDF2 (100k iterations)
-- Passwords are only decrypted one at a time when you actually open an
-  entry - the list view never touches plaintext
-- Login lockout with increasing wait time after repeated wrong attempts
-- Clipboard auto-clears 20 seconds after you copy a password
-- Auto-locks after 2 minutes idle
-- Built-in password generator with a strength indicator
+## What it does
 
-## Project layout
+- Master password login, checked with a constant-time comparison instead of a plain `==`
+- Saved passwords are encrypted with Fernet (AES-128-CBC + HMAC). The key comes from your master password via PBKDF2-HMAC-SHA256, 100k iterations
+- The entry list only shows website/username/last modified - passwords aren't decrypted until you actually open that one entry
+- Get the master password wrong too many times and you get locked out for a bit, with the wait doubling each time
+- Copying a password to clipboard clears it again after 20 seconds
+- Vault locks itself after 2 minutes of no activity
+- Password generator with adjustable length, symbols on/off, and a weak/medium/strong indicator
+- Search box to filter entries as you type
+
+## Layout
 
 ```
 passkit/
-├── config.py       # constants (iteration counts, timeouts, etc.)
+├── config.py       # constants - iteration counts, timeouts, etc
 ├── crypto.py        # key derivation, encryption, password generation
-├── database.py       # SQLite access, no crypto logic lives here
-├── manager.py       # ties crypto + database together, session/lockout state
+├── database.py       # sqlite access, no crypto happens in here
+├── manager.py       # glues crypto + database together, handles session/lockout
 └── gui/
     ├── style.py      # colors, fonts, ttk theming
     ├── dialogs.py     # login/setup/add/edit/generator popups
     └── app.py        # main window
 main.py               # entry point
-tests/                # pytest unit tests for crypto and manager layers
+tests/                # pytest tests for crypto.py and manager.py
 ```
 
-## Running it
+Kept crypto and database separate on purpose - database.py never touches a decrypted password, it just moves encrypted blobs in and out of sqlite. Its `list_entries()` query doesn't even select the encrypted password column, so there's no accidental way to end up decrypting everything just to show the list. manager.py is the only thing that holds the actual session key, and it drops it as soon as you lock the vault.
+
+The login check and the encryption key come from two separate hashes of your master password, so if the login hash ever leaked somehow it wouldn't also hand over the encryption key.
+
+## Setup
+
+Needs Python 3.10+ and Tkinter (usually bundled, but on some Linux distros you need `sudo apt install python3-tk` separately).
 
 ```bash
+git clone https://github.com/dhruvMahlawat/Passkit.git
+cd Passkit
 pip install -r requirements.txt
 python main.py
 ```
 
-First run asks you to set a master password. After that, it's the login
-screen every time.
+First launch asks you to set a master password (8 char minimum). After that it's just a login screen. There's no "forgot password" option - if you lose it, the vault is gone, that's kind of the point.
 
-## Running the tests
+By default the db file is `passwords.db` next to the app. Set `VAULT_DB_PATH` if you want it somewhere else.
+
+## Tests
 
 ```bash
 pip install pytest
 pytest
 ```
 
-## Security notes / limitations
+Covers the crypto round-trip stuff (encrypt/decrypt, wrong key failing correctly, password strength labeling) and the manager layer (login/lockout, adding an entry and reading it back).
 
-- This encrypts the password *values*, not the SQLite file itself -
-  website names and usernames are stored as plaintext. Don't put your
-  vault file somewhere untrusted.
-- The login lockout is in-memory only, so it resets if the app restarts.
-  It slows down someone poking at the GUI, it isn't a defense against
-  someone with direct access to `passwords.db`.
-- No password recovery. If you forget the master password, the data is
-  gone - that's the point of not storing it in a reversible form.
+## Known limitations
 
-## Ideas for later
+- Only the password values are encrypted, not the whole db file - website/username fields are plaintext in the sqlite file. Don't leave `passwords.db` somewhere someone else can grab it.
+- The lockout counter is in memory only, so restarting the app resets it. It's just there to slow down someone messing with the GUI, not a real defense if someone has the db file directly.
+- No cloud backup or export, so back up `passwords.db` yourself if you care about the data.
 
-- Encrypt the whole database file, not just the password column
-- Export/import (encrypted) backups
-- A "breached password" check against a local list
+## Maybe later
+
+- Encrypt the whole db, not just the password column
+- Encrypted export/import for backups
+- Check new passwords against a local breached-password list
+
+## License
+
+Nothing set yet, so normal copyright rules apply by default. Might add MIT later.
