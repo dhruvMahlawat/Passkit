@@ -1,145 +1,67 @@
-# 🔐 Secure Password Manager (Python + Tkinter)
+# Password Manager
 
-A simple and secure desktop password manager built using Python.
-This application allows users to store, manage, and generate passwords safely using encryption.
+A local desktop password manager built with Python, Tkinter, and SQLite.
+Made as a college project, later cleaned up into something closer to a
+normal Python codebase (package layout, tests, no giant single file).
 
----
+## Features
 
-## 🚀 Features
+- Master password login, checked with a constant-time comparison
+- Entries encrypted at rest with Fernet (AES-128-CBC + HMAC), keyed off
+  your master password through PBKDF2 (100k iterations)
+- Passwords are only decrypted one at a time when you actually open an
+  entry - the list view never touches plaintext
+- Login lockout with increasing wait time after repeated wrong attempts
+- Clipboard auto-clears 20 seconds after you copy a password
+- Auto-locks after 2 minutes idle
+- Built-in password generator with a strength indicator
 
-* 🔑 Master Password Authentication
-* 🔐 Encryption using **Fernet (cryptography library)**
-* 🧠 Secure hashing with **PBKDF2 + SHA-256**
-* 💾 Local database using **SQLite**
-* 🔍 Search saved credentials
-* ➕ Add, ✏️ Edit, ❌ Delete passwords
-* 👁️ Show/Hide password
-* 📋 Copy to clipboard
-* ⚡ Strong password generator
-* 🖥️ Clean GUI using Tkinter
-
----
-
-## 🛠️ Tech Stack
-
-* Python
-* Tkinter (GUI)
-* SQLite3 (Database)
-* Cryptography (Encryption)
-* Hashlib (Security)
-
----
-
-## 📂 Project Structure
+## Project layout
 
 ```
-password_manager.py   # Main application file
-passwords.db          # Database (auto-created)
-config.json           # Config file (if used)
+passkit/
+├── config.py       # constants (iteration counts, timeouts, etc.)
+├── crypto.py        # key derivation, encryption, password generation
+├── database.py       # SQLite access, no crypto logic lives here
+├── manager.py       # ties crypto + database together, session/lockout state
+└── gui/
+    ├── style.py      # colors, fonts, ttk theming
+    ├── dialogs.py     # login/setup/add/edit/generator popups
+    └── app.py        # main window
+main.py               # entry point
+tests/                # pytest unit tests for crypto and manager layers
 ```
 
----
-
-## 🔒 Security Overview
-
-* Master password is **never stored directly**
-* Password is:
-
-  * Salted
-  * Hashed using PBKDF2 (100,000 iterations)
-* Encryption key is derived from the master password
-* All stored passwords are encrypted using Fernet
-
----
-
-## ▶️ Installation & Setup
-
-### 1. Install Dependencies
+## Running it
 
 ```bash
-pip install cryptography
+pip install -r requirements.txt
+python main.py
 ```
 
-### 2. Run the Application
+First run asks you to set a master password. After that, it's the login
+screen every time.
+
+## Running the tests
 
 ```bash
-python password_manager.py
+pip install pytest
+pytest
 ```
 
----
+## Security notes / limitations
 
-## 🧑‍💻 Usage
+- This encrypts the password *values*, not the SQLite file itself -
+  website names and usernames are stored as plaintext. Don't put your
+  vault file somewhere untrusted.
+- The login lockout is in-memory only, so it resets if the app restarts.
+  It slows down someone poking at the GUI, it isn't a defense against
+  someone with direct access to `passwords.db`.
+- No password recovery. If you forget the master password, the data is
+  gone - that's the point of not storing it in a reversible form.
 
-### First Run:
+## Ideas for later
 
-* Set your **master password**
-
-### Next Runs:
-
-* Login using your master password
-
----
-
-## ⚙️ Functionalities
-
-### 🔑 Manage Passwords
-
-* Add new credentials
-* Update existing ones
-* Delete entries
-
-### 🔍 Search
-
-* Search by website or username
-
-### 🎲 Password Generator
-
-* Length: 8–64 characters
-* Optional symbols
-
-### 📋 Clipboard Support
-
-* Copy passwords easily
-
----
-
-## ⚠️ Important Notes
-
-* ❗ If you forget your master password, recovery is not possible
-* ❗ Keep your database file (`passwords.db`) safe
-* ❗ Do not share your master password
-
----
-
-## 🧪 Future Improvements
-
-* Cloud backup / sync
-* Export & import feature
-* Dark mode
-* Auto-lock system
-* Multi-user support
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-Feel free to fork and improve the project.
-
----
-
-## 📄 License
-
-This project is open-source and free to use.
-
----
-
-## ⭐ Acknowledgement
-
-This project demonstrates:
-
-* Secure password handling
-* GUI development in Python
-* Real-world encryption implementation
-
----
+- Encrypt the whole database file, not just the password column
+- Export/import (encrypted) backups
+- A "breached password" check against a local list
