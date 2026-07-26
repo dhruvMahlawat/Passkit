@@ -1,8 +1,6 @@
 # Passkit
 
-A local password manager written in Python, using Tkinter for the UI and SQLite for storage. Started out as a college project, then I went back and cleaned it up into an actual package instead of one long script.
-
-Everything runs on your machine. No server, no account, no syncing.
+A local password manager written in Python, using Tkinter for the UI and SQLite for storage.Everything runs on your machine. No server, no account, no syncing.
 
 ## What it does
 
