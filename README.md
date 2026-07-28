@@ -1,6 +1,6 @@
 # Passkit
 
-A local desktop password manager built with Python, Flet, and SQLite.
+A local desktop password manager built with Python, Flet and SQLite.
 
 
 ## Features
