@@ -81,6 +81,37 @@ class PasswordManager:
         remaining = self._locked_until - time.monotonic()
         return max(0.0, remaining)
 
+    def change_master_password(self, current_password: str, new_password: str):
+        """Re-encrypts every saved entry under a new master password.
+
+        There's no "forgot password" recovery in this app on purpose - the
+        master password IS the encryption key, there's nothing to reset it
+        to. This is the supported way to change it instead.
+        """
+        record = self.db.load_master_record()
+        if record is None or not crypto.verify_master_password(current_password, record.salt, record.password_hash):
+            raise ValueError("current master password is incorrect")
+
+        if len(new_password) < config.MIN_MASTER_PASSWORD_LENGTH:
+            raise ValueError(f"master password needs at least {config.MIN_MASTER_PASSWORD_LENGTH} characters")
+
+        old_vault = crypto.Vault(crypto.derive_encryption_key(current_password, record.salt))
+
+        new_salt = crypto.new_salt()
+        new_vault = crypto.Vault(crypto.derive_encryption_key(new_password, new_salt))
+
+        # Re-encrypt everything before committing the new master record, so
+        # a crash partway through doesn't leave the vault in a state where
+        # the master password no longer matches the data.
+        for meta in self.db.list_entries():
+            encrypted = self.db.get_encrypted_password(meta.id)
+            plaintext = old_vault.decrypt(encrypted)
+            self.db.replace_encrypted_password(meta.id, new_vault.encrypt(plaintext))
+
+        new_hash = crypto.hash_master_password(new_password, new_salt)
+        self.db.save_master_record(new_salt, new_hash)
+        self._vault = new_vault
+
     # --- entries -----------------------------------------------------------
 
     def _require_unlocked(self):

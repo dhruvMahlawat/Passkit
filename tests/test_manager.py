@@ -38,6 +38,27 @@ def test_add_and_read_back_entry(manager):
     assert full_entry.password == "s3cret!"
 
 
+def test_change_master_password_reencrypts_entries(manager):
+    manager.set_master_password("old-master-pw")
+    entry_id = manager.add_entry("github.com", "dhruv", "s3cret!")
+
+    manager.change_master_password("old-master-pw", "new-master-pw")
+
+    # old password no longer works
+    manager.lock()
+    assert manager.login("old-master-pw") is False
+    assert manager.login("new-master-pw") is True
+
+    meta = manager.list_entries()[0]
+    assert manager.get_entry(entry_id, meta).password == "s3cret!"
+
+
+def test_change_master_password_rejects_wrong_current(manager):
+    manager.set_master_password("correct-horse-battery")
+    with pytest.raises(ValueError):
+        manager.change_master_password("wrong-current", "whatever-new")
+
+
 def test_lockout_after_repeated_failures(manager):
     manager.set_master_password("correct-horse-battery")
     manager.lock()

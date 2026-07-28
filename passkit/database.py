@@ -133,3 +133,13 @@ class Database:
                 "SELECT encrypted_password FROM entries WHERE id = ?", (entry_id,)
             ).fetchone()
         return row[0] if row else None
+
+    def replace_encrypted_password(self, entry_id: int, encrypted_password: str):
+        """Used when re-encrypting under a new master password. Doesn't touch
+        modified_at - swapping the encryption key isn't a content change.
+        """
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE entries SET encrypted_password = ? WHERE id = ?",
+                (encrypted_password, entry_id),
+            )

@@ -1,4 +1,4 @@
-# All the constants live here so nothing is hardcoded three files deep.
+"""All the constants live here so nothing is hardcoded three files deep."""
 
 import os
 

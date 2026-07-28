@@ -1,87 +1,64 @@
-from tkinter import ttk
+import flet as ft
 
-BG = "#f5f6f8"
-SURFACE = "#ffffff"
-BORDER = "#dfe2e6"
-TEXT = "#1f2430"
-MUTED = "#6b7280"
-ACCENT = "#3b5bdb"
-ACCENT_DARK = "#2f4bc0"
-DANGER = "#d64545"
-SUCCESS = "#2f9e44"
+BG = "#15151d"
+SURFACE = "#1e1f2b"
+SURFACE_ALT = "#262838"
+BORDER = "#33354a"
+TEXT = "#f2f2f7"
+MUTED = "#8b8da3"
+ACCENT = "#7c5cff"
+ACCENT_DARK = "#6a4ce0"
+DANGER = "#ef5164"
+SUCCESS = "#39c17f"
+WARN_BG = "#332916"
+WARN_BORDER = "#7a5a1f"
+WARN_TEXT = "#e0ac3f"
 
-FONT = ("Segoe UI", 10)
-FONT_BOLD = ("Segoe UI", 10, "bold")
-FONT_TITLE = ("Segoe UI", 15, "bold")
-FONT_MONO = ("Consolas", 11)
-
-STRENGTH_COLORS = {"weak": DANGER, "medium": "#e8912d", "strong": SUCCESS}
+STRENGTH_COLORS = {"weak": DANGER, "medium": "#e0a13a", "strong": SUCCESS}
 
 
-def apply(root):
-    root.configure(bg=BG)
-
-    style = ttk.Style(root)
-    # 'clam' is the only built-in theme that actually respects color overrides
-    # on Windows/Linux/macOS consistently.
-    style.theme_use("clam")
-
-    style.configure("TFrame", background=BG)
-    style.configure("Surface.TFrame", background=SURFACE)
-
-    style.configure("TLabel", background=BG, foreground=TEXT, font=FONT)
-    style.configure("Surface.TLabel", background=SURFACE, foreground=TEXT, font=FONT)
-    style.configure("Title.TLabel", background=BG, foreground=TEXT, font=FONT_TITLE)
-    style.configure("Muted.TLabel", background=BG, foreground=MUTED, font=FONT)
-    style.configure("Surface.Muted.TLabel", background=SURFACE, foreground=MUTED, font=FONT)
-
-    style.configure(
-        "Accent.TButton",
-        font=FONT_BOLD,
-        foreground="white",
-        background=ACCENT,
-        borderwidth=0,
-        padding=(14, 8),
+def card(content, width=380, padding=28):
+    return ft.Container(
+        content=content,
+        width=width,
+        padding=padding,
+        bgcolor=SURFACE,
+        border_radius=16,
+        border=ft.Border.all(1, BORDER),
     )
-    style.map("Accent.TButton", background=[("active", ACCENT_DARK), ("disabled", BORDER)])
 
-    style.configure(
-        "Secondary.TButton",
-        font=FONT,
-        foreground=TEXT,
-        background=SURFACE,
-        borderwidth=1,
-        padding=(12, 7),
+
+def warning_note(text):
+    return ft.Container(
+        content=ft.Row(
+            [
+                ft.Text("⚠", size=16),
+                ft.Text(text, size=12, color=WARN_TEXT, expand=True),
+            ],
+            spacing=10,
+        ),
+        bgcolor=WARN_BG,
+        border=ft.Border.all(1, WARN_BORDER),
+        border_radius=10,
+        padding=12,
     )
-    style.map("Secondary.TButton", background=[("active", BG)])
-
-    style.configure(
-        "Danger.TButton",
-        font=FONT_BOLD,
-        foreground="white",
-        background=DANGER,
-        borderwidth=0,
-        padding=(14, 8),
-    )
-    style.map("Danger.TButton", background=[("active", "#b83a3a")])
-
-    style.configure("TEntry", padding=6, fieldbackground=SURFACE, font=FONT)
-
-    style.configure(
-        "Treeview",
-        background=SURFACE,
-        fieldbackground=SURFACE,
-        foreground=TEXT,
-        rowheight=28,
-        font=FONT,
-        borderwidth=0,
-    )
-    style.configure("Treeview.Heading", font=FONT_BOLD, background=BG, foreground=MUTED, relief="flat")
-    style.map("Treeview", background=[("selected", ACCENT)], foreground=[("selected", "white")])
 
 
-def center(dialog, width, height):
-    dialog.update_idletasks()
-    x = (dialog.winfo_screenwidth() - width) // 2
-    y = (dialog.winfo_screenheight() - height) // 2
-    dialog.geometry(f"{width}x{height}+{x}+{y}")
+def strength_bar(width=280):
+    """Returns (control, refresh_fn). refresh_fn(password) updates the bar."""
+    bar = ft.ProgressBar(value=0, width=width, height=6, border_radius=3, bgcolor=BORDER)
+    label = ft.Text("", size=12, color=MUTED)
+    fill = {"weak": 0.33, "medium": 0.66, "strong": 1.0}
+
+    def refresh(password, strength_fn):
+        if not password:
+            bar.value = 0
+            label.value = ""
+            return
+        strength = strength_fn(password)
+        bar.value = fill[strength]
+        bar.color = STRENGTH_COLORS[strength]
+        label.value = strength.capitalize()
+        label.color = STRENGTH_COLORS[strength]
+
+    return ft.Column([bar, label], spacing=4), refresh

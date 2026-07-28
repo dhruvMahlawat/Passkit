@@ -1,18 +1,11 @@
-"""Run the password manager.
-
-    python main.py
-"""
-
-import tkinter as tk
+import flet as ft
 
 from passkit.gui.app import App
 
 
-def main():
-    root = tk.Tk()
-    App(root)
-    root.mainloop()
+def main(page: ft.Page):
+    App(page)
 
 
 if __name__ == "__main__":
-    main()
+    ft.run(main)

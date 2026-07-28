@@ -3,5 +3,5 @@ __pycache__/
 .venv/
 venv/
 
-# the actual vault 
+# the actual vault - never commit this
 passwords.db
