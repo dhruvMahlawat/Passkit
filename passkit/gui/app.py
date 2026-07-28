@@ -159,7 +159,11 @@ class App:
 
     def _refresh_list(self):
         entries = self.manager.list_entries(self._search)
-        self.list_view.controls = [self._entry_row(meta) for meta in entries]
+        rows = [self._entry_row(meta) for meta in entries]
+        for row in rows:
+            row.opacity = 0
+            row.offset = ft.Offset(0, 0.06)
+        self.list_view.controls = rows
 
         if entries:
             self.status.content.value = f"{len(entries)} saved entr{'y' if len(entries) == 1 else 'ies'}"
@@ -167,6 +171,20 @@ class App:
             self.status.content.value = "No matches for that search"
         else:
             self.status.content.value = "No entries yet - click \"Add entry\" to save your first one"
+
+        if rows:
+            self.page.run_task(self._reveal_rows, rows)
+
+    async def _reveal_rows(self, rows):
+        # A short stagger per row so the list feels like it's settling into
+        # place rather than just appearing - purely cosmetic, capped low so
+        # a big list doesn't take forever to finish revealing.
+        self.page.update()
+        for i, row in enumerate(rows):
+            await asyncio.sleep(min(i, 12) * 0.02)
+            row.opacity = 1
+            row.offset = ft.Offset(0, 0)
+            row.update()
 
     def _entry_row(self, meta):
         initial = meta.website[:1].upper() or "?"
@@ -222,11 +240,17 @@ class App:
             border=ft.Border.all(1, style.BORDER),
             on_click=open_menu_action("view"),
             ink=True,
+            scale=1.0,
             animate=150,
+            animate_opacity=250,
+            animate_offset=250,
+            animate_scale=150,
         )
 
         def on_hover(e):
-            row.bgcolor = style.SURFACE_ALT if e.data == "true" else style.SURFACE
+            hovering = e.data == "true"
+            row.bgcolor = style.SURFACE_ALT if hovering else style.SURFACE
+            row.scale = 1.01 if hovering else 1.0
             row.update()
 
         row.on_hover = on_hover
