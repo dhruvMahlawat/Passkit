@@ -1,8 +1,4 @@
-"""Run the password manager.
-
-    python main.py
-"""
-
+#run it from here!
 import flet as ft
 
 from passkit.gui.app import App
