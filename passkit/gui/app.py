@@ -18,8 +18,12 @@ class App:
         page.theme_mode = ft.ThemeMode.DARK
         page.padding = 0
 
-        page.window.full_screen = True
         page.window.frameless = True
+        page.window.width = 900
+        page.window.height = 640
+        page.window.min_width = 620
+        page.window.min_height = 460
+        page.run_task(page.window.center)
 
         # A single AnimatedSwitcher holds whatever screen is active, so
         # switching between login/setup/main fades instead of hard-cutting.
@@ -84,10 +88,18 @@ class App:
     # --- main view -----------------------------------------------------
 
     def _build_main_view(self):
+        def start_drag(e):
+            self.page.run_task(self.page.window.start_dragging)
+
         header = ft.Container(
             content=ft.Row(
                 [
                     ft.Text("🔑 Passkit", size=20, weight=ft.FontWeight.BOLD, color=style.TEXT),
+                    ft.GestureDetector(
+                        content=ft.Container(expand=True, height=40),
+                        on_pan_start=start_drag,
+                        expand=True,
+                    ),
                     ft.Row(
                         [
                             ft.TextButton("Change master password", on_click=self._open_change_password),
@@ -96,7 +108,6 @@ class App:
                         ]
                     ),
                 ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
             padding=ft.Padding(24, 20, 24, 10),
         )
@@ -148,7 +159,16 @@ class App:
         self.page.update()
 
     def _quit(self, e=None):
-        self.page.run_task(self.page.window.close)
+        async def close():
+            # By the time this awaits a response, the session may already
+            # be torn down from the close request itself - that's expected,
+            # not an error, so it's not worth letting it print a traceback.
+            try:
+                await self.page.window.close()
+            except Exception:
+                pass
+
+        self.page.run_task(close)
 
 
 

@@ -17,6 +17,19 @@ WARN_TEXT = "#e0ac3f"
 STRENGTH_COLORS = {"weak": DANGER, "medium": "#e0a13a", "strong": SUCCESS}
 
 
+def drag_strip(page):
+    """A thin invisible strip at the top of a frameless screen that lets you
+    drag the window - there's no OS titlebar to grab otherwise.
+    """
+    def start_drag(e):
+        page.run_task(page.window.start_dragging)
+
+    return ft.GestureDetector(
+        content=ft.Container(height=32, bgcolor=BG),
+        on_pan_start=start_drag,
+    )
+
+
 def card(content, width=380, padding=28):
     return ft.Container(
         content=content,

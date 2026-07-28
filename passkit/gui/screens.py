@@ -41,11 +41,18 @@ def setup_screen(page: ft.Page, manager: PasswordManager, on_done):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    return ft.Container(
-        content=style.card(content, width=380),
-        alignment=ft.Alignment.CENTER,
+    return ft.Column(
+        [
+            style.drag_strip(page),
+            ft.Container(
+                content=style.card(content, width=380),
+                alignment=ft.Alignment.CENTER,
+                expand=True,
+                bgcolor=style.BG,
+            ),
+        ],
+        spacing=0,
         expand=True,
-        bgcolor=style.BG,
     )
 
 
@@ -81,9 +88,16 @@ def login_screen(page: ft.Page, manager: PasswordManager, on_done):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
-    return ft.Container(
-        content=style.card(content, width=380),
-        alignment=ft.Alignment.CENTER,
+    return ft.Column(
+        [
+            style.drag_strip(page),
+            ft.Container(
+                content=style.card(content, width=380),
+                alignment=ft.Alignment.CENTER,
+                expand=True,
+                bgcolor=style.BG,
+            ),
+        ],
+        spacing=0,
         expand=True,
-        bgcolor=style.BG,
     )
