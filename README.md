@@ -2,7 +2,7 @@
 
 A local desktop password manager built with Python, Flet and SQLite.
 
-
+![demo](assets/demo.gif)
 ## Features
 
 - Master password login, checked with a constant-time comparison
